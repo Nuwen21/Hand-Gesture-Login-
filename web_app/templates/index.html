@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hand Gesture Authenticator</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+    
+    <!-- Styling -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    
+    <!-- MediaPipe JavaScript CDN links -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+</head>
+<body>
+
+    <main class="app-container">
+        
+        <!-- Welcome Screen -->
+        <section id="welcome-screen" class="view-panel active">
+            <div class="header-card">
+                <div class="brand-avatar">
+                    <div class="avatar-inner">
+                        <svg class="brand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                            <circle cx="12" cy="11" r="3"></circle>
+                        </svg>
+                    </div>
+                </div>
+                <h1>BIOMETRIC GESTURE AUTHENTICATION</h1>
+                <p>Secure system access using local PBKDF2 cryptography and real-time hand gesture sequences.</p>
+                
+                <div class="menu-actions">
+                    <button id="btn-show-login" class="btn btn-neumorphic btn-large">Access Vault</button>
+                    <button id="btn-show-register" class="btn btn-neumorphic btn-large">Register New Identity</button>
+                    <button id="btn-show-logs" class="btn btn-neumorphic btn-large">Security Audit Logs</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Register Screen -->
+        <section id="register-screen" class="view-panel">
+            <div class="form-card">
+                <div class="brand-avatar small-avatar">
+                    <div class="avatar-inner">
+                        <svg class="brand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="8.5" cy="7" r="4"></circle>
+                            <line x1="20" y1="8" x2="20" y2="14"></line>
+                            <line x1="23" y1="11" x2="17" y2="11"></line>
+                        </svg>
+                    </div>
+                </div>
+                <h2 class="view-title">Register Identity</h2>
+                <p class="subtitle">Create master credentials and register hand gesture sequence</p>
+                
+                <div class="input-group">
+                    <label for="reg-username">Username</label>
+                    <div class="input-wrapper">
+                        <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="12" cy="7" r="4"></circle>
+                        </svg>
+                        <input type="text" id="reg-username" placeholder="Create username" autocomplete="off">
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label for="reg-password">Password</label>
+                    <div class="input-wrapper">
+                        <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                        </svg>
+                        <input type="password" id="reg-password" placeholder="Create master password">
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label for="reg-confirm">Confirm Password</label>
+                    <div class="input-wrapper">
+                        <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                        </svg>
+                        <input type="password" id="reg-confirm" placeholder="Confirm master password">
+                    </div>
+                </div>
+                
+                <p id="reg-error" class="error-text"></p>
+                
+                <div class="form-actions">
+                    <button class="btn btn-neumorphic btn-back btn-to-welcome">Back</button>
+                    <button id="btn-submit-register" class="btn btn-primary">Continue to Gestures</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Login Screen -->
+        <section id="login-screen" class="view-panel">
+            <div class="form-card">
+                <div class="brand-avatar small-avatar">
+                    <div class="avatar-inner">
+                        <svg class="brand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                        </svg>
+                    </div>
+                </div>
+                <h2 class="view-title">Vault Identity Verification</h2>
+                <p class="subtitle">Enter username and password to proceed to biometric gesture scan</p>
+                
+                <div class="input-group">
+                    <label for="login-username">Username</label>
+                    <div class="input-wrapper">
+                        <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="12" cy="7" r="4"></circle>
+                        </svg>
+                        <input type="text" id="login-username" placeholder="Enter username" autocomplete="off">
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label for="login-password">Password</label>
+                    <div class="input-wrapper">
+                        <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                        </svg>
+                        <input type="password" id="login-password" placeholder="Enter password">
+                    </div>
+                </div>
+                
+                <p id="login-error" class="error-text"></p>
+                
+                <div class="form-actions">
+                    <button class="btn btn-neumorphic btn-back btn-to-welcome">Back</button>
+                    <button id="btn-submit-login" class="btn btn-primary">Verify Password</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Camera Tracking Screen -->
+        <section id="camera-screen" class="view-panel viewport-panel">
+            <div class="form-card camera-card">
+                <h2 id="camera-title" class="view-title">Biometric Gesture Key Scan</h2>
+                <p id="camera-subtitle" class="subtitle">Show 3 distinct hand gestures in sequence.</p>
+                
+                <div class="camera-viewport">
+                    <!-- Video element (hidden, fed into MediaPipe) -->
+                    <video id="webcam" width="640" height="480" autoplay playsinline style="display:none;"></video>
+                    <!-- Canvas where we render flipped frame and landmarks -->
+                    <canvas id="output-canvas" width="640" height="480"></canvas>
+                    <div id="camera-loading" class="camera-overlay-text">Activating Camera Stream...</div>
+                </div>
+
+                <!-- Gesture HUD -->
+                <div class="gesture-hud">
+                    <div class="sequence-display">
+                        <div class="seq-box" id="seq-0">Empty</div>
+                        <div class="seq-box" id="seq-1">Empty</div>
+                        <div class="seq-box" id="seq-2">Empty</div>
+                    </div>
+                    
+                    <div class="progress-bar-container">
+                        <div id="gesture-progress" class="progress-fill"></div>
+                    </div>
+                    
+                    <p id="hud-gesture-desc" class="hud-text">Hold gesture to capture</p>
+                </div>
+
+                <div class="form-actions">
+                    <button id="btn-cancel-scan" class="btn btn-danger btn-medium">Cancel Authentication</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Audit Logs Screen -->
+        <section id="logs-screen" class="view-panel logs-panel">
+            <div class="form-card logs-card">
+                <h2 class="view-title">Audit Authentication Logs</h2>
+                <p class="subtitle">Real-time security auditing and failed attempt tracking</p>
+                
+                <div class="logs-table-container">
+                    <table class="logs-table">
+                        <thead>
+                            <tr>
+                                <th>Timestamp</th>
+                                <th>Username</th>
+                                <th>Action / Status</th>
+                                <th>Details / Reason</th>
+                            </tr>
+                        </thead>
+                        <tbody id="logs-table-body">
+                            <!-- Loaded dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="form-actions">
+                    <button class="btn btn-neumorphic btn-back btn-to-welcome">Back to Menu</button>
+                    <button id="btn-refresh-logs" class="btn btn-primary">Refresh Logs</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Success/Alert Screen -->
+        <section id="alert-screen" class="view-panel">
+            <div class="alert-card" id="alert-card-container">
+                <div class="alert-icon-wrapper" id="alert-icon-graphic">
+                    <div class="alert-icon-inner success-icon" id="alert-icon-inner">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                    </div>
+                </div>
+                <h2 id="alert-title" class="alert-title">Access Granted</h2>
+                <p id="alert-message" class="alert-desc">Identity verified using gesture sequence.</p>
+                <button id="btn-alert-done" class="btn btn-primary btn-large">Continue</button>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Cloud Status Pill (Top Right) -->
+    <div id="cloud-status-pill" class="cloud-status-pill" title="Configure Cloud Firebase">
+        <span id="cloud-status-dot" class="cloud-dot local"></span>
+        <span id="cloud-status-label">Cloud: Local Demo</span>
+    </div>
+
+    <!-- Firebase Config Modal -->
+    <div id="firebase-modal" class="modal-overlay">
+        <div class="modal-card">
+            <h3 class="modal-title">Firebase Cloud Connection</h3>
+            <p class="modal-subtitle">Paste your Firebase web project configuration object below to sync credentials and audit logs directly to Cloud Firestore.</p>
+            
+            <textarea id="firebase-config-input" class="config-textarea" placeholder='{
+  "apiKey": "AIzaSy...",
+  "authDomain": "my-project.firebaseapp.com",
+  "projectId": "my-project",
+  "storageBucket": "my-project.appspot.com",
+  "messagingSenderId": "...",
+  "appId": "..."
+}'></textarea>
+            
+            <div class="modal-actions">
+                <button id="btn-save-firebase" class="btn btn-primary">Save & Connect</button>
+                <button id="btn-reset-firebase" class="btn btn-neumorphic">Reset to Local</button>
+                <button id="btn-close-modal" class="btn btn-neumorphic">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Real-time Clock & Date Widget (Bottom Right) -->
+    <div id="datetime-widget" class="datetime-widget">
+        <div class="datetime-clock">
+            <span class="live-dot"></span>
+            <span id="clock-time">--:--:--</span>
+        </div>
+        <div class="datetime-date" id="clock-date">--------, -- --- ----</div>
+    </div>
+
+    <!-- Firebase SDK (Compat) -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+    <script src="{{ url_for('static', filename='firebase-config.js') }}"></script>
+
+    <!-- JS Core -->
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
